@@ -193,7 +193,120 @@ FROM (
     GROUP BY account_id, record_date
 ) AS daily_counts
 GROUP BY account_id;
+
+---
+
+## 10️⃣ Percentage of Orders Using Promotions
+
+**Problem:** Calculate the percentage of orders in `online_orders` that used a promotion from `online_promotions`.
+
+```sql
+SELECT 
+    ROUND(
+        COUNT(CASE WHEN op.promotion_id IS NOT NULL THEN 1 END) * 100.0 / COUNT(*),
+        2
+    ) AS promotion_usage_percentage
+FROM online_orders oo
+LEFT JOIN online_promotions op
+  ON oo.promotion_id = op.promotion_id;
 ```
+
+**Notes:**
+
+* `LEFT JOIN` ensures all orders are included, even if no promotion was used.
+* `CASE WHEN op.promotion_id IS NOT NULL` counts only orders with valid promotions.
+* Dividing by `COUNT(*)` and multiplying by 100 gives the **percentage of orders using promotions**.
+
+---
+
+## 11️⃣ Employees Hired Between January and July 2022
+
+**Problem:** Find the number of employees hired between January and July 2022 inclusive.
+
+```sql
+SELECT 
+    COUNT(*) AS num_of_emp
+FROM employees
+WHERE joining_date BETWEEN '2022-01-01' AND '2022-07-31';
+```
+
+**Alternative using YEAR and MONTH functions:**
+
+```sql
+SELECT 
+    COUNT(*) AS num_of_emp
+FROM employees
+WHERE YEAR(joining_date) = 2022
+  AND MONTH(joining_date) BETWEEN 1 AND 7;
+```
+
+**Notes:**
+
+* `BETWEEN` includes both start and end dates.
+* The alternative method uses `YEAR` and `MONTH` functions, which is useful if you want to ignore time portions in timestamps.
+
+---
+
+## 12️⃣ Average Session Duration by Session Type
+
+**Problem:** Calculate the average session duration (in seconds) for each session type.
+
+**MySQL Version:**
+
+```sql
+SELECT 
+    session_type,
+    ROUND(AVG(TIMESTAMPDIFF(SECOND, session_start, session_end)), 2) AS avg_session_duration_seconds
+FROM twitch_sessions
+GROUP BY session_type;
+```
+
+**PostgreSQL Version:**
+
+```sql
+SELECT 
+    session_type,
+    ROUND(AVG(EXTRACT(EPOCH FROM (session_end - session_start))), 2) AS avg_session_duration_seconds
+FROM twitch_sessions
+GROUP BY session_type;
+```
+
+**Notes:**
+
+* `TIMESTAMPDIFF` (MySQL) and `EXTRACT(EPOCH FROM interval)` (PostgreSQL) calculate **duration in seconds**.
+* `AVG()` calculates the **mean duration per session type**.
+* `ROUND(..., 2)` ensures results are displayed with 2 decimal places.
+
+---
+
+## 13️⃣ Customers with Highest Daily Total Order Cost
+
+**Problem:** Find customers with the highest daily total order cost between `2019-02-01` and `2019-05-01`.
+
+```sql
+WITH daily_totals AS (
+    SELECT 
+        c.first_name,
+        o.order_date,
+        SUM(o.total_order_cost) AS daily_total_cost
+    FROM customers c
+    JOIN orders o
+      ON c.id = o.cust_id
+    WHERE o.order_date BETWEEN '2019-02-01' AND '2019-05-01'
+    GROUP BY c.first_name, o.order_date
+)
+SELECT first_name, order_date, daily_total_cost
+FROM daily_totals
+WHERE daily_total_cost = (
+    SELECT MAX(daily_total_cost) FROM daily_totals
+);
+```
+
+**Notes:**
+
+* `SUM(total_order_cost)` aggregates all orders **per customer per day**.
+* `WITH daily_totals AS (...)` creates a **CTE** to simplify finding the maximum daily total.
+* The final `WHERE` clause ensures only the **customer(s) and date(s) with the highest daily total** are returned.
 
 ---
 
