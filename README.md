@@ -310,6 +310,34 @@ WHERE daily_total_cost = (
 
 ---
 
+## 14️⃣ Running Total of Sales
+
+**Problem:** Compute a running total of sales amount ordered by date.
+
+```
+WITH runningtot AS (
+    SELECT 
+        order_id,
+        order_date,
+        amount,
+        SUM(amount) OVER (
+            ORDER BY order_date 
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        ) AS rtotal
+    FROM sales
+)
+SELECT order_id, order_date, amount, rtotal
+FROM runningtot;
+```
+
+**Notes:**
+
+- The SUM() OVER window function accumulates totals progressively.
+- UNBOUNDED PRECEDING ensures the sum starts from the first record.
+- Common in analytics for computing cumulative totals.
+
+---
+
 ## ✅ Tips for SQL Problem Solving
 
 1. **Alias columns/tables** for clarity.
