@@ -338,6 +338,39 @@ FROM runningtot;
 
 ---
 
+Got it 👍 — keeping it exactly in your existing format, no extra sections:
+
+---
+
+## 15️⃣ Repeated Logins Within Time Window
+
+**Problem:** Count the number of repeated logins within 5 minutes of the previous login for the same user.
+
+```sql
+WITH prev_time_tab AS (
+    SELECT 
+        user_id,
+        login_timestamp,
+        LAG(login_timestamp) OVER (
+            PARTITION BY user_id
+            ORDER BY login_timestamp
+        ) AS prev_time
+    FROM logins
+)
+SELECT COUNT(*) AS repeated_login_count
+FROM prev_time_tab
+WHERE prev_time IS NOT NULL
+  AND login_timestamp - prev_time <= INTERVAL '5 minutes';
+```
+
+**Notes:**
+
+* `LAG()` is used to get the previous login timestamp for each user.
+* Time difference is calculated using timestamp subtraction.
+* `prev_time IS NOT NULL` ensures the first login is excluded.
+* Only logins within 5 minutes of the previous login are counted.
+----
+
 ## ✅ Tips for SQL Problem Solving
 
 1. **Alias columns/tables** for clarity.
