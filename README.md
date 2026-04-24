@@ -371,6 +371,51 @@ WHERE prev_time IS NOT NULL
 * Only logins within 5 minutes of the previous login are counted.
 ----
 
+---
+
+Here you go — formatted exactly like your notes so you can **append as 16️⃣** 👇
+
+---
+
+## 16️⃣ Employee Hierarchy with Levels (Recursive CTE)
+
+**Problem:** Retrieve all employees in a hierarchy starting from the top-level manager and assign a level to each employee based on their position in the hierarchy.
+
+```sql
+WITH RECURSIVE Manlevel AS (
+    SELECT 
+        emp_id, 
+        emp_name, 
+        manager_id, 
+        1 AS level
+    FROM employees
+    WHERE manager_id IS NULL
+
+    UNION ALL
+
+    SELECT 
+        e.emp_id, 
+        e.emp_name, 
+        e.manager_id, 
+        m.level + 1
+    FROM employees e
+    JOIN Manlevel m
+      ON e.manager_id = m.emp_id
+)
+SELECT * 
+FROM Manlevel;
+```
+
+**Notes:**
+
+* Anchor query starts with top-level managers (`manager_id IS NULL`).
+* Recursive part joins employees with their managers to traverse hierarchy.
+* `level` increments at each step to represent hierarchy depth.
+* `UNION ALL` is used for performance (avoids unnecessary deduplication).
+* Final result must be selected from the CTE (`Manlevel`), not the base table.
+
+---
+
 ## ✅ Tips for SQL Problem Solving
 
 1. **Alias columns/tables** for clarity.
